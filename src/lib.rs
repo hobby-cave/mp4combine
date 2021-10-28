@@ -1,8 +1,16 @@
-use std::error::Error;
-use std::fmt::{Debug, Display, Formatter};
+use std::{
+    error::Error,
+    fmt::{Debug, Display, Formatter},
+};
 
 pub mod atom;
 pub mod combine;
+
+#[cfg(feature = "jni")]
+pub mod jni_export;
+
+#[cfg(feature = "clib")]
+pub mod c_export;
 
 #[macro_export]
 macro_rules! magic {

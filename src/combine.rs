@@ -1,13 +1,15 @@
-use std::cmp::min;
-use std::fs::File;
-use std::io::{Error, ErrorKind, Read, Result, Seek, SeekFrom, Write};
+use std::{
+    cmp::min,
+    fs::File,
+    io::{Error, ErrorKind, Read, Result, Seek, SeekFrom, Write},
+    path::Path,
+};
 
-use crate::atom::{Atom, BytesAtomInput, FileAtomInput};
 use crate::{
+    atom::{Atom, BytesAtomInput, FileAtomInput},
     Mp4CombineError, MAGIC_FTYP, MAGIC_MDAT, MAGIC_MFHD, MAGIC_MOOF, MAGIC_MOOV, MAGIC_TFHD,
     MAGIC_TRAF, MAGIC_TRUN,
 };
-use std::path::Path;
 
 pub fn combine_mp4<InitPath, PartPath, OutPath>(
     init_path: InitPath,
