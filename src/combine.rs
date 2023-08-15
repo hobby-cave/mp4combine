@@ -11,6 +11,37 @@ use crate::{
     MAGIC_TRAF, MAGIC_TRUN,
 };
 
+pub struct Combine {
+    output: File,
+}
+
+impl Combine {
+    pub fn new<P: AsRef<Path>>(output_path: P) -> Result<Self> {
+        Ok(Self {
+            output: File::create(output_path)?,
+        })
+    }
+
+    pub fn write_init<P: AsRef<Path>>(&mut self, init_part_path: P) -> Result<()> {
+        Init::open(init_part_path)?.write(&mut self.output)?;
+        self.output.seek(SeekFrom::End(0))?;
+        Ok(())
+    }
+
+    pub fn write_chunk<P: AsRef<Path>>(&mut self, chunk_part_path: P) -> Result<()> {
+        let mut part = Part::open(chunk_part_path)?;
+        part.process(self.output.stream_position()?)?;
+        part.write(&mut self.output)?;
+        self.output.seek(SeekFrom::End(0))?;
+        Ok(())
+    }
+
+    pub fn close(mut self) -> Result<()> {
+        self.output.flush()?;
+        Ok(())
+    }
+}
+
 pub fn combine_mp4<InitPath, PartPath, OutPath>(
     init_path: InitPath,
     part_path: PartPath,
@@ -21,13 +52,10 @@ where
     PartPath: AsRef<Path>,
     OutPath: AsRef<Path>,
 {
-    let mut output = File::create(out_path)?;
-    Init::open(init_path)?.write(&mut output)?;
-    output.seek(SeekFrom::End(0))?;
-
-    let mut part = Part::open(part_path)?;
-    part.process(output.stream_position()?)?;
-    part.write(&mut output)?;
+    let mut combine = Combine::new(out_path)?;
+    combine.write_init(init_path)?;
+    combine.write_chunk(part_path)?;
+    combine.close()?;
 
     Ok(())
 }
